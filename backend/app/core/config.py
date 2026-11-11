@@ -76,6 +76,8 @@ class Settings(BaseSettings):
     ai_max_analyses_per_run: int = 50
     ai_daily_budget_usd: float = 2.0
     ai_fallback_to_mock: bool = True
+    ai_timeout_seconds: float = 60.0
+    ai_max_retries: int = 2
 
     # --- telegram --------------------------------------------------------
     telegram_bot_token: SecretStr | None = None

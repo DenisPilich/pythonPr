@@ -6,7 +6,8 @@ HTTP concerns. Every relationship used here is eager-loaded by the repository.
 
 from __future__ import annotations
 
-from app.models import UserProfile, Vacancy
+from app.models import AIAnalysis, UserProfile, Vacancy
+from app.schemas.analysis import AnalysisRead
 from app.schemas.jobs import CompanyBrief, JobDetail, JobListItem, SourceRef, TechnologyBrief
 from app.schemas.profile import ProfileRead
 
@@ -81,4 +82,24 @@ def profile_to_read(profile: UserProfile, telegram_id: int) -> ProfileRead:
         profile_hash=profile.profile_hash,
         created_at=profile.created_at,
         updated_at=profile.updated_at,
+    )
+
+
+def analysis_to_read(analysis: AIAnalysis) -> AnalysisRead:
+    return AnalysisRead(
+        id=analysis.id,
+        vacancy_id=analysis.vacancy_id,
+        match_score=analysis.match_score,
+        experience_match=analysis.experience_match,
+        skills_match=analysis.skills_match,
+        missing_skills=analysis.missing_skills,
+        strong_matches=analysis.strong_matches,
+        red_flags=analysis.red_flags,
+        recommendation=analysis.recommendation,
+        reason=analysis.reason,
+        provider=analysis.provider,
+        model=analysis.model,
+        is_degraded=analysis.is_degraded,
+        prompt_version=analysis.prompt_version,
+        created_at=analysis.created_at,
     )

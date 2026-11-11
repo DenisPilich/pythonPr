@@ -15,6 +15,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.ai.factory import build_ai_provider, build_fallback_provider
 from app.api.errors import (
     app_error_handler,
     unhandled_exception_handler,
@@ -59,17 +60,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings: Settings = app.state.settings
     database = Database(settings)
     redis = create_redis(settings)
+    provider = build_ai_provider(settings)
+    fallback = build_fallback_provider(settings)
     app.state.db = database
     app.state.redis = redis
+    app.state.ai_provider = provider
+    app.state.ai_fallback = fallback
 
     logger.info(
         "application_starting",
         environment=settings.environment,
         version=settings.version,
+        ai_provider=provider.name,
     )
     try:
         yield
     finally:
+        await provider.aclose()
+        if fallback is not None:
+            await fallback.aclose()
         await redis.aclose()
         await database.dispose()
         logger.info("application_stopped")
@@ -98,7 +107,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["X-Request-ID"],
+        expose_headers=["X-Request-ID", "X-Analysis-Cached", "X-Analysis-Skipped"],
     )
 
     app.add_exception_handler(AppError, app_error_handler)

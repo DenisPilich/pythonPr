@@ -9,6 +9,7 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.mock_provider import MockAIProvider
 from app.api.deps import get_session
 from app.core.config import Settings
 from app.main import create_app
@@ -51,6 +52,8 @@ async def api_client(
     connections created by the test; ASGITransport keeps everything on one loop.
     """
     app = create_app(api_settings)
+    app.state.ai_provider = MockAIProvider()
+    app.state.ai_fallback = None
 
     async def override_session() -> AsyncIterator[AsyncSession]:
         yield db_session

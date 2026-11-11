@@ -120,7 +120,7 @@ indexes (checked with `EXPLAIN`).
 
 ---
 
-## Stage 4 — AI layer & profile ⬜
+## Stage 4 — AI layer & profile ✅
 
 **Why:** the differentiator of the project. It must be structured, cheap, testable and replaceable.
 
@@ -140,6 +140,12 @@ prompt snapshot, budget rejection, endpoint contracts.
 
 **Exit criteria:** `AI_PROVIDER=mock` produces sensible scores offline; switching to OpenAI requires
 only env changes; no AI call happens for a vacancy that fails hard filters.
+
+> Verified: the mock scorer produces an apply-worthy score for a full stack match and flags
+> seniority, salary, format, language and excluded-stack mismatches. The OpenAI adapter is tested
+> against a mocked structured-output endpoint, including invalid JSON, schema violations, retries
+> and 401. Analyses are cached by `(vacancy, user, profile_hash, prompt_version)`, guarded by a
+> daily budget and fall back to the mock provider with `is_degraded=true`.
 
 ---
 

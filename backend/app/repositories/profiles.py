@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +23,9 @@ class ProfileRepository:
             .join(User, User.id == UserProfile.user_id)
             .where(User.telegram_id == telegram_id)
         )
+
+    async def get_by_user_id(self, user_id: uuid.UUID) -> UserProfile | None:
+        return await self._session.scalar(select(UserProfile).where(UserProfile.user_id == user_id))
 
     async def create_user(self, telegram_id: int) -> User:
         user = User(telegram_id=telegram_id)

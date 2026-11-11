@@ -11,6 +11,11 @@ import html
 import re
 from html.parser import HTMLParser
 
+from app.utils.text import truncate
+
+
+__all__ = ["html_to_text", "truncate"]
+
 
 _BLOCK_TAGS = {
     "p",
@@ -104,11 +109,3 @@ def html_to_text(value: str | None) -> str:
     except Exception:  # pragma: no cover - HTMLParser is very tolerant
         return _collapse(html.unescape(_TAG_RE.sub(" ", value)))
     return _collapse("".join(parser.parts))
-
-
-def truncate(text: str, limit: int) -> str:
-    """Cut at a word boundary and mark the cut, for prompt budgets."""
-    if len(text) <= limit:
-        return text
-    cut = text[:limit].rsplit(" ", 1)[0]
-    return f"{cut}…"
