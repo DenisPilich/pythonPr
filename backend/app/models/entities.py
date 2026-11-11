@@ -103,7 +103,11 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     profile: Mapped[UserProfile | None] = relationship(
-        back_populates="user", uselist=False, lazy="raise", cascade="all, delete-orphan", passive_deletes=True
+        back_populates="user",
+        uselist=False,
+        lazy="raise",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
     vacancies: Mapped[list[UserVacancy]] = relationship(
         back_populates="user", lazy="raise", cascade="all, delete-orphan", passive_deletes=True
@@ -124,9 +128,7 @@ class UserProfile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             name="salary_non_negative",
         ),
         CheckConstraint("min_match_score BETWEEN 0 AND 100", name="match_score_range"),
-        CheckConstraint(
-            "max_notifications_per_day BETWEEN 0 AND 100", name="daily_quota_range"
-        ),
+        CheckConstraint("max_notifications_per_day BETWEEN 0 AND 100", name="daily_quota_range"),
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -227,12 +229,8 @@ class Company(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 class Vacancy(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "vacancies"
     __table_args__ = (
-        CheckConstraint(
-            "salary_min IS NULL OR salary_min >= 0", name="salary_min_non_negative"
-        ),
-        CheckConstraint(
-            "salary_max IS NULL OR salary_max >= 0", name="salary_max_non_negative"
-        ),
+        CheckConstraint("salary_min IS NULL OR salary_min >= 0", name="salary_min_non_negative"),
+        CheckConstraint("salary_max IS NULL OR salary_max >= 0", name="salary_max_non_negative"),
         CheckConstraint(
             "salary_max IS NULL OR salary_min IS NULL OR salary_max >= salary_min",
             name="salary_range_order",
@@ -424,7 +422,13 @@ class VacancyTechnology(Base):
 class AIAnalysis(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "ai_analyses"
     __table_args__ = (
-        UniqueConstraint("vacancy_id", "user_id", "profile_hash", "prompt_version"),
+        UniqueConstraint(
+            "vacancy_id",
+            "user_id",
+            "profile_hash",
+            "prompt_version",
+            name="uq_ai_analyses_vacancy_user_profile_prompt",
+        ),
         Index("ix_ai_analyses_user_created", "user_id", "created_at"),
         CheckConstraint("match_score BETWEEN 0 AND 100", name="match_score_range"),
     )
@@ -459,12 +463,8 @@ class AIAnalysis(UUIDPrimaryKeyMixin, Base):
     red_flags: Mapped[list[str]] = mapped_column(
         ARRAY(Text), nullable=False, default=list, server_default=text("'{}'::text[]")
     )
-    recommendation: Mapped[Recommendation] = mapped_column(
-        recommendation_type, nullable=False
-    )
-    reason: Mapped[str] = mapped_column(
-        Text, nullable=False, default="", server_default=text("''")
-    )
+    recommendation: Mapped[Recommendation] = mapped_column(recommendation_type, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default=text("''"))
     is_degraded: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")
     )
@@ -589,9 +589,7 @@ class Notification(UUIDPrimaryKeyMixin, Base):
 
 class CollectorRun(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "collector_runs"
-    __table_args__ = (
-        Index("ix_collector_runs_source_started", "source_id", "started_at"),
-    )
+    __table_args__ = (Index("ix_collector_runs_source_started", "source_id", "started_at"),)
 
     source_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     # --- security --------------------------------------------------------
     api_key: SecretStr = SecretStr("dev-secret-change-me")
     telegram_allowed_user_ids: list[int] = Field(default_factory=list)
+    demo_telegram_id: int = 100_000_001
+
+    # --- caching ---------------------------------------------------------
+    stats_cache_enabled: bool = True
 
     # --- database --------------------------------------------------------
     database_url: str | None = None
@@ -57,6 +61,9 @@ class Settings(BaseSettings):
     # --- collection / http ----------------------------------------------
     http_timeout_seconds: float = 15.0
     http_max_retries: int = 3
+    http_retry_base_seconds: float = 0.5
+    http_retry_max_seconds: float = 8.0
+    http_max_connections: int = 10
     http_user_agent: str = "AI-Job-Radar/0.1 (+https://github.com/your-handle/ai-job-radar)"
     collector_batch_size: int = 50
 

@@ -14,7 +14,6 @@ import structlog
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
 
 from app.api.errors import (
     app_error_handler,
@@ -30,6 +29,7 @@ from app.core.logging import configure_logging
 from app.core.redis import create_redis
 from app.db.session import Database
 
+
 logger = structlog.get_logger(__name__)
 
 DESCRIPTION = """
@@ -38,13 +38,19 @@ normalizes them into a single model, scores every vacancy against a user profile
 with an LLM, and delivers the relevant ones to Telegram.
 
 * `GET /health/live`, `GET /health/ready` — probes
-* `GET /api/v1/meta` — service metadata
-* Job, company, technology, stats and profile endpoints arrive in Stage 3/4.
+* `GET /api/v1/jobs`, `/jobs/{id}` — search and detail
+* `GET /api/v1/companies`, `/technologies`, `/stats` — catalogs and dashboard data
+* `GET|POST|PUT /api/v1/profile` — matching profile (writes require `X-API-Key`)
 """
 
 OPENAPI_TAGS: list[dict[str, Any]] = [
     {"name": "health", "description": "Liveness and readiness probes."},
     {"name": "meta", "description": "Service metadata and version."},
+    {"name": "jobs", "description": "Vacancy search and detail."},
+    {"name": "companies", "description": "Employers and their vacancy counts."},
+    {"name": "technologies", "description": "Technology demand catalog."},
+    {"name": "stats", "description": "Dashboard aggregates."},
+    {"name": "profile", "description": "User matching profile."},
 ]
 
 
@@ -78,7 +84,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         version=settings.version,
         description=DESCRIPTION,
         openapi_tags=OPENAPI_TAGS,
-        default_response_class=ORJSONResponse,
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",

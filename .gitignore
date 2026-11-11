@@ -5,8 +5,9 @@ __pycache__/
 .eggs/
 build/
 dist/
-.venv/
+.venv*/
 venv/
+.tools/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
@@ -14,6 +15,8 @@ venv/
 .coverage.*
 coverage.xml
 htmlcov/
+.pgdata*/
+backend/.tmp/
 
 # --- Environment / secrets ------------------------------------------------
 .env

@@ -1,7 +1,10 @@
 .git
 .gitignore
 .venv
-venv
+.venv*
+.tools
+.tmp
+.pgdata*
 __pycache__
 *.py[cod]
 .pytest_cache

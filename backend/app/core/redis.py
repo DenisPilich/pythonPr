@@ -7,7 +7,7 @@ from redis.asyncio import Redis
 from app.core.config import Settings
 
 
-def create_redis(settings: Settings) -> Redis[str]:
+def create_redis(settings: Settings) -> Redis:
     """Create a lazily connected client; `ping()` or first command opens the socket."""
     return Redis.from_url(
         settings.redis_url,

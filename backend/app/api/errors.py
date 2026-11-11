@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.exceptions import AppError
 
+
 logger = structlog.get_logger(__name__)
 
 PROBLEM_CONTENT_TYPE = "application/problem+json"

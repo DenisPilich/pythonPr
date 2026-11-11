@@ -17,6 +17,7 @@ import yaml
 
 from app.domain.enums import TechnologyCategory
 
+
 DEFAULT_TAXONOMY_PATH = Path(__file__).resolve().parent / "data" / "technologies.yml"
 
 _SLUG_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -90,6 +91,8 @@ def parse_taxonomy(payload: Any) -> Taxonomy:
         if not isinstance(name, str) or not name.strip():
             raise TaxonomyError(f"technologies[{index}].name must be a non-empty string")
 
+        if not isinstance(raw_category, str):
+            raise TaxonomyError(f"technologies[{index}].category is invalid: {raw_category!r}")
         try:
             category = TechnologyCategory(raw_category)
         except ValueError as exc:

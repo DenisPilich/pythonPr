@@ -26,7 +26,7 @@ from app.domain.enums import (
 )
 
 
-def pg_enum(enum_cls: type[Any], name: str) -> SAEnum[Any]:
+def pg_enum(enum_cls: type[Any], name: str) -> SAEnum:
     """Native PostgreSQL enum that stores member *values*, not names."""
     return SAEnum(
         enum_cls,

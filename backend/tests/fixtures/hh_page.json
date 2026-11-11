@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "id": "123",
+      "name": "Senior Python Developer",
+      "employer": {"name": "Acme, Inc."},
+      "area": {"name": "Berlin, Germany"},
+      "snippet": {
+        "requirement": "Python, FastAPI, PostgreSQL",
+        "responsibility": "Build public APIs"
+      },
+      "salary": {"from": 60000, "to": 80000, "currency": "EUR", "gross": true},
+      "published_at": "2026-11-01T10:00:00+0300",
+      "alternate_url": "https://hh.ru/vacancy/123",
+      "schedule": {"id": "remote"},
+      "employment": {"id": "full"}
+    },
+    {"id": "456"}
+  ],
+  "found": 2,
+  "pages": 1,
+  "page": 0,
+  "per_page": 20
+}

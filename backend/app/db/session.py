@@ -45,9 +45,8 @@ class Database:
     @asynccontextmanager
     async def session(self) -> AsyncIterator[AsyncSession]:
         """Unit of work: commit on success, rollback on any exception."""
-        async with self._session_factory() as session:
-            async with session.begin():
-                yield session
+        async with self._session_factory() as session, session.begin():
+            yield session
 
     async def ping(self) -> None:
         async with self._engine.connect() as connection:

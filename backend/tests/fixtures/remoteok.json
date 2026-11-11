@@ -1,0 +1,17 @@
+[
+  {"legal": "See https://remoteok.com/api for terms and attribution requirements"},
+  {
+    "id": "111",
+    "slug": "acme-senior-python",
+    "company": "Acme",
+    "position": "Senior Python Engineer",
+    "description": "<p>We use <b>FastAPI</b> and PostgreSQL.</p>",
+    "location": "Worldwide",
+    "salary_min": 120000,
+    "salary_max": 160000,
+    "date": "2026-11-02T09:30:00+00:00",
+    "url": "https://remoteok.com/remote-jobs/acme-senior-python",
+    "tags": ["python", "fastapi"]
+  },
+  {"id": null, "position": null}
+]

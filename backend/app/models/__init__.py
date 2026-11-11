@@ -15,6 +15,7 @@ from app.models.entities import (
     VacancyTechnology,
 )
 
+
 __all__ = [
     "AIAnalysis",
     "CollectorRun",

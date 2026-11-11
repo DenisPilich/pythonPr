@@ -1,0 +1,17 @@
+{
+  "0-legal-notice": "https://remotive.com/api/remote-jobs",
+  "job-count": 1,
+  "jobs": [
+    {
+      "id": 222,
+      "url": "https://remotive.com/remote-jobs/software-dev/backend-developer-222",
+      "title": "Backend Developer",
+      "company_name": "Beta",
+      "description": "<p>Django, PostgreSQL, Docker</p>",
+      "publication_date": "2026-11-03T08:00:00",
+      "candidate_required_location": "Europe",
+      "salary": "€50k - €70k",
+      "job_type": "full_time"
+    }
+  ]
+}

@@ -7,22 +7,40 @@ clone can run `pytest` before Docker is up.
 
 from __future__ import annotations
 
+import asyncio
 import os
 import subprocess
 import sys
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
+import app.models  # noqa: F401  # populate Base.metadata
 from app.core.config import Settings
+from app.db.base import Base
 from app.main import create_app
 
+
 BACKEND_DIR = Path(__file__).resolve().parents[1]
+TRUNCATE_TABLES = ", ".join(table.name for table in reversed(Base.metadata.sorted_tables))
+
+
+async def _truncate_all(database_url: str) -> None:
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(f"TRUNCATE TABLE {TRUNCATE_TABLES} RESTART IDENTITY CASCADE")
+            )
+    finally:
+        await engine.dispose()
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
@@ -61,12 +79,18 @@ def database_url() -> str:
     url = os.getenv("TEST_DATABASE_URL")
     if not url:
         pytest.skip("TEST_DATABASE_URL is not set")
+    database_name = urlparse(url).path.lstrip("/")
+    if not database_name.endswith("_test"):
+        pytest.fail(
+            "TEST_DATABASE_URL must point to a database whose name ends with '_test' "
+            f"(got {database_name!r}); the suite truncates all tables"
+        )
     return url
 
 
 @pytest.fixture(scope="session")
 def migrated_database(database_url: str) -> str:
-    """Apply migrations once per session — tests run against the real schema."""
+    """Apply migrations once per session, then start from a clean schema."""
     result = subprocess.run(
         [sys.executable, "-m", "alembic", "upgrade", "head"],
         cwd=BACKEND_DIR,
@@ -77,6 +101,7 @@ def migrated_database(database_url: str) -> str:
     )
     if result.returncode != 0:
         pytest.fail(f"alembic upgrade failed:\n{result.stdout}\n{result.stderr}")
+    asyncio.run(_truncate_all(database_url))
     return database_url
 
 

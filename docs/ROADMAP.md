@@ -28,7 +28,7 @@ an HTTP response from hh.ru and a Telegram message".
 
 ---
 
-## Stage 1 — Foundation ⬜
+## Stage 1 — Foundation ✅
 
 **Why:** a service is only as good as its wiring: settings, logging, sessions, migrations and a
 reproducible local environment. Doing this first makes every later stage testable.
@@ -53,9 +53,14 @@ round-trip, health endpoints.
 **Exit criteria:** `docker compose up postgres redis` + `alembic upgrade head` + `pytest` green;
 `/health/ready` reports DB and Redis.
 
+> Verified against a local PostgreSQL 16 in the development sandbox (the Docker daemon was not
+> reachable there). Migration up/down, `alembic check`, and all model/seed tests were executed;
+> `docker compose config` validates, but `docker compose up` is re-checked at Stage 5 when the
+> worker and beat join the stack.
+
 ---
 
-## Stage 2 — Collection & normalization ⬜
+## Stage 2 — Collection & normalization ✅
 
 **Why:** this is the data engine. Everything downstream is only as good as what lands in
 `vacancies`.
@@ -81,9 +86,14 @@ integration tests against PostgreSQL.
 **Exit criteria:** two consecutive collection runs insert 0 duplicates; a forced 500 from a source is
 retried and recorded as `failed` without touching other sources.
 
+> Verified live: RemoteOK 99 fetched → 99 created, then 99 duplicates on the second run; Remotive
+> 13, Arbeitnow 300 (1 cross-source update), WeWorkRemotely 25 (1 duplicate, 1 update). hh.ru
+> answered `403 Forbidden` from the development network (geo restriction) — the failed run is
+> recorded with the error text, and the other sources were unaffected.
+
 ---
 
-## Stage 3 — Read API ⬜
+## Stage 3 — Read API ✅
 
 **Why:** the API is the contract for the dashboard and for manual exploration; it also proves the
 schema is queryable.
@@ -103,6 +113,10 @@ validation errors, 404/422 shapes, OpenAPI schema snapshot.
 
 **Exit criteria:** `/docs` is usable end-to-end against seeded data; query plans for the feed use
 indexes (checked with `EXPLAIN`).
+
+> Verified: 25 API integration tests cover pagination, every filter, sorting, 404/422 problem
+> responses, the profile lifecycle and stats shape. Statistics are cached for 60 s and degrade to a
+> direct query when Redis is unavailable.
 
 ---
 

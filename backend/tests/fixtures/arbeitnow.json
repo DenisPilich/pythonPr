@@ -1,0 +1,18 @@
+{
+  "data": [
+    {
+      "slug": "gamma-python-developer",
+      "company_name": "Gamma",
+      "title": "Python Developer",
+      "description": "<p>Django and Docker</p>",
+      "remote": true,
+      "url": "https://www.arbeitnow.com/view/gamma-python-developer",
+      "tags": ["python", "django"],
+      "job_types": ["full-time"],
+      "location": "Berlin",
+      "created_at": 1762000000
+    }
+  ],
+  "links": {"next": null},
+  "meta": {"current_page": 1}
+}

@@ -15,6 +15,7 @@ from app.core.config import Settings
 from app.db.session import Database
 from app.schemas.health import HealthResponse
 
+
 router = APIRouter(tags=["health"])
 logger = structlog.get_logger(__name__)
 
@@ -40,7 +41,7 @@ async def liveness(request: Request) -> HealthResponse:
 async def readiness(request: Request, response: Response) -> HealthResponse:
     settings: Settings = request.app.state.settings
     database: Database = request.app.state.db
-    redis: Redis[str] = request.app.state.redis
+    redis: Redis = request.app.state.redis
 
     checks: dict[str, str] = {}
     healthy = True
