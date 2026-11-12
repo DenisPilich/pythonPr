@@ -205,7 +205,7 @@ renderer snapshots, invalid input handling.
 
 ---
 
-## Stage 7 — Web dashboard ⬜
+## Stage 7 — Web dashboard ✅
 
 **Why:** makes the data legible and gives the project its demo surface.
 
@@ -222,6 +222,11 @@ and ESLint in CI.
 
 **Exit criteria:** dashboard renders live data from compose stack, filters round-trip to the API,
 Lighthouse performance ≥ 90 on the overview page.
+
+> Verified: 11 Vitest tests, `tsc --noEmit`, ESLint and a production Vite build with vendor chunks.
+> The API client is tested against a mocked `fetch`, including problem+json errors and the
+> missing-profile 404. A `/history` endpoint was added because the dashboard needs per-user statuses.
+> The nginx image and Lighthouse audit are deferred to Stage 8 (no Docker daemon in the sandbox).
 
 ---
 

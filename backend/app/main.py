@@ -52,6 +52,7 @@ OPENAPI_TAGS: list[dict[str, Any]] = [
     {"name": "technologies", "description": "Technology demand catalog."},
     {"name": "stats", "description": "Dashboard aggregates."},
     {"name": "profile", "description": "User matching profile."},
+    {"name": "history", "description": "Per-user vacancy history and statuses."},
 ]
 
 

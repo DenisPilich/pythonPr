@@ -27,6 +27,9 @@ backend/.tmp/
 node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/.tmp/
+frontend/.pnpm-store/
+frontend/coverage/
 *.tsbuildinfo
 
 # --- IDE / OS -------------------------------------------------------------

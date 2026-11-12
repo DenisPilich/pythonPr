@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
-from app.api.v1.endpoints import companies, jobs, profile, stats, technologies
+from app.api.v1.endpoints import companies, history, jobs, profile, stats, technologies
 from app.core.config import Settings
 from app.schemas.meta import MetaResponse
 
@@ -39,3 +39,4 @@ router.include_router(companies.router)
 router.include_router(technologies.router)
 router.include_router(stats.router)
 router.include_router(profile.router)
+router.include_router(history.router)
