@@ -19,11 +19,16 @@ from app.db.session import Database
 logger = structlog.get_logger(__name__)
 
 
-def build_dispatcher(database: Database, *, throttle_interval: float = 0.4) -> Dispatcher:
+def build_dispatcher(
+    database: Database,
+    *,
+    throttle_interval: float = 0.4,
+    allowed_user_ids: tuple[int, ...] = (),
+) -> Dispatcher:
     dispatcher = Dispatcher(storage=MemoryStorage())
     for observer in (dispatcher.message, dispatcher.callback_query):
         observer.middleware(DbSessionMiddleware(database))
-        observer.middleware(UserMiddleware())
+        observer.middleware(UserMiddleware(allowed_user_ids))
         observer.middleware(ThrottlingMiddleware(throttle_interval))
     dispatcher.include_routers(
         start.router,
@@ -49,7 +54,9 @@ async def run_bot(settings: Settings | None = None) -> None:
         token=settings.telegram_bot_token.get_secret_value(),
         default=DefaultBotProperties(parse_mode="HTML"),
     )
-    dispatcher = build_dispatcher(database)
+    dispatcher = build_dispatcher(
+        database, allowed_user_ids=tuple(settings.telegram_allowed_user_ids)
+    )
     logger.info("bot_starting", environment=settings.environment)
     try:
         await dispatcher.start_polling(bot, allowed_updates=dispatcher.resolve_used_update_types())

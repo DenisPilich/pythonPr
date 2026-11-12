@@ -82,17 +82,62 @@ jobs:
       - name: Tests
         run: pytest --cov=app --cov-report=term-missing --cov-fail-under=80
 
+  frontend:
+    name: Frontend — lint, types, tests, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (eslint)
+        run: npm run lint
+
+      - name: Types and production build (tsc + vite)
+        run: npm run build
+
+      - name: Tests (vitest)
+        run: npm test -- --run
+
+  compose:
+    name: Compose configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker compose
+        run: cp .env.example .env && docker compose config --quiet
+
   docker:
-    name: Docker image builds
+    name: Docker images build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
+
       - name: Build backend image
         uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: false
           tags: ai-job-radar/backend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: false
+          tags: ai-job-radar/frontend:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max

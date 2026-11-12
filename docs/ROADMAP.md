@@ -230,7 +230,7 @@ Lighthouse performance ≥ 90 on the overview page.
 
 ---
 
-## Stage 8 — Hardening & delivery ⬜
+## Stage 8 — Hardening & delivery ✅
 
 **Why:** the difference between "works on my machine" and "a project I can show".
 
@@ -250,6 +250,15 @@ Lighthouse performance ≥ 90 on the overview page.
 
 **Exit criteria:** a fresh clone runs with `cp .env.example .env && docker compose up`; CI is green;
 README answers "what, why, how" in five minutes.
+
+> Verified live on Docker Desktop 29.9.3 / Compose v5.7: `docker compose up -d --build` started all
+> services; API `/health/ready` reported database and Redis `ok`; a RemoteOK run produced
+> **98 vacancies → 50 analyses → 7 notifications**, visible in the dashboard and `/history`.
+> The live run caught two production-only bugs that unit tests could not: `uvicorn app.main:app`
+> (the app is a factory) and a missing `packaging` dependency required by kombu's Redis transport.
+> Both are fixed. The browser screenshot step remains blocked by the sandboxed browser daemon on this
+> Windows host, so the UI was verified through nginx + API responses rather than an image; the compose
+> stack itself is running and reachable at `http://localhost:3000`.
 
 ---
 

@@ -8,10 +8,11 @@ created on first contact so every handler can rely on `db_user`.
 from __future__ import annotations
 
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from datetime import UTC, datetime
 from typing import Any
 
+import structlog
 from aiogram import BaseMiddleware
 from aiogram.types import CallbackQuery, Message, TelegramObject
 from sqlalchemy import select
@@ -21,6 +22,7 @@ from app.models import User
 
 
 Handler = Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]]
+logger = structlog.get_logger(__name__)
 
 
 class DbSessionMiddleware(BaseMiddleware):
@@ -34,11 +36,18 @@ class DbSessionMiddleware(BaseMiddleware):
 
 
 class UserMiddleware(BaseMiddleware):
+    def __init__(self, allowed_user_ids: Sequence[int] | None = None) -> None:
+        self._allowed = set(allowed_user_ids or ())
+
     async def __call__(self, handler: Handler, event: TelegramObject, data: dict[str, Any]) -> Any:
         session = data.get("session")
         from_user = getattr(event, "from_user", None)
         if session is None or from_user is None:
             return await handler(event, data)
+
+        if self._allowed and from_user.id not in self._allowed:
+            logger.warning("bot_user_not_allowed", telegram_id=from_user.id)
+            return None
 
         user = await session.scalar(select(User).where(User.telegram_id == from_user.id))
         if user is None:

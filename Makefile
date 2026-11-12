@@ -5,8 +5,9 @@ VENV := $(BACKEND)/.venv
 
 .DEFAULT_GOAL := help
 
-.PHONY: help init up down logs ps migrate revision seed test test-unit test-integration \
-        lint fmt typecheck check shell psql clean
+.PHONY: help init up down logs ps migrate revision seed demo test test-unit test-integration \
+        lint fmt typecheck frontend-install frontend-dev frontend-test frontend-build \
+        frontend-lint check shell psql clean
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -38,6 +39,9 @@ revision: ## Autogenerate a migration: make revision m="add something"
 seed: ## Upsert reference data (sources, technologies)
 	cd $(BACKEND) && .venv/bin/python -m app.cli seed
 
+demo: ## Create the demo profile for the dashboard and bot
+	$(DC) exec api python -m app.cli demo
+
 test: ## Run the full test suite
 	cd $(BACKEND) && .venv/bin/pytest
 
@@ -56,7 +60,22 @@ fmt: ## Auto-fix lint issues and format
 typecheck: ## Run mypy
 	cd $(BACKEND) && .venv/bin/mypy app
 
-check: lint typecheck test ## Everything CI runs
+frontend-install: ## Install dashboard dependencies from the lockfile
+	npm --prefix frontend ci
+
+frontend-dev: ## Run the Vite dev server on :5173
+	npm --prefix frontend run dev
+
+frontend-test: ## Run dashboard unit tests
+	npm --prefix frontend test -- --run
+
+frontend-build: ## Type-check and build the dashboard
+	npm --prefix frontend run build
+
+frontend-lint: ## Lint the dashboard
+	npm --prefix frontend run lint
+
+check: lint typecheck test frontend-lint frontend-build frontend-test ## Everything CI runs
 
 shell: ## Open a shell inside the API container
 	$(DC) exec api sh

@@ -30,7 +30,8 @@ dependencies = [
     "orjson>=3.10",
     "pyyaml>=6.0",
     "feedparser>=6.0",
-    "celery>=5.4",
+    "celery[redis]>=5.4",
+    "packaging>=24.0",
     "aiogram>=3.13",
 ]
 

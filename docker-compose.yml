@@ -61,7 +61,17 @@ services:
     command: >
       sh -c "alembic upgrade head &&
              python -m app.cli seed &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers"
+             uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000 --proxy-headers"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=3).status == 200 else 1)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   worker:
@@ -119,7 +129,7 @@ services:
         VITE_TELEGRAM_ID: ${DEMO_TELEGRAM_ID:-100000001}
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "${FRONTEND_PORT:-3000}:80"
     restart: unless-stopped

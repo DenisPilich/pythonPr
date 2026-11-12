@@ -2,6 +2,7 @@
 
 Usage:
     python -m app.cli seed
+    python -m app.cli demo
     python -m app.cli check-db
     python -m app.cli collect hh --max-pages 2
     python -m app.cli collect all
@@ -18,14 +19,18 @@ from app.collectors.errors import CollectorError
 from app.collectors.http import HttpClient
 from app.collectors.registry import build_collector
 from app.core.config import get_settings
+from app.core.exceptions import NotFoundError
 from app.core.logging import configure_logging, get_logger
 from app.db.seed import seed_reference_data
 from app.db.session import Database
+from app.domain.enums import EnglishLevel, SeniorityLevel, WorkFormat
 from app.models import Source
 from app.normalization.pipeline import NormalizationPipeline
 from app.ports.vacancy_source import SourceConfig
 from app.repositories.sources import SourceRepository
+from app.schemas.profile import ProfilePayload
 from app.services.collection import CollectionService
+from app.services.profile import ProfileService
 
 
 async def _seed() -> int:
@@ -44,6 +49,45 @@ async def _seed() -> int:
         technologies=report.technologies,
     )
     print(f"seeded: sources={report.sources} technologies={report.technologies}")
+    return 0
+
+
+async def _demo() -> int:
+    settings = get_settings()
+    database = Database(settings)
+    try:
+        async with database.session() as session:
+            await seed_reference_data(session)
+            service = ProfileService(session)
+            try:
+                await service.get(settings.demo_telegram_id)
+                created = False
+            except NotFoundError:
+                await service.create(
+                    settings.demo_telegram_id,
+                    ProfilePayload(
+                        headline="Python backend developer (demo)",
+                        desired_positions=["Python Backend Developer", "Backend Engineer"],
+                        target_seniority=[SeniorityLevel.MIDDLE, SeniorityLevel.SENIOR],
+                        skills=["Python", "FastAPI", "PostgreSQL", "Docker", "Redis"],
+                        preferred_stack=["FastAPI", "PostgreSQL"],
+                        excluded_stack=["PHP"],
+                        english_level=EnglishLevel.B2,
+                        min_salary_amount=3000,
+                        salary_currency="EUR",
+                        preferred_locations=["Remote"],
+                        work_formats=[WorkFormat.REMOTE],
+                        min_match_score=70,
+                    ),
+                )
+                created = True
+    finally:
+        await database.dispose()
+
+    print(
+        f"demo profile {'created' if created else 'already exists'} "
+        f"for telegram_id={settings.demo_telegram_id}"
+    )
     return 0
 
 
@@ -116,6 +160,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=__version__)
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("seed", help="Upsert sources and technologies")
+    subparsers.add_parser("demo", help="Create the demo profile for the dashboard/bot")
     subparsers.add_parser("check-db", help="Verify database connectivity")
     subparsers.add_parser("version", help="Print the application version")
 
@@ -136,6 +181,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     configure_logging(get_settings())
     if args.command == "seed":
         return asyncio.run(_seed())
+    if args.command == "demo":
+        return asyncio.run(_demo())
     if args.command == "check-db":
         return asyncio.run(_check_db())
     if args.command == "collect":
