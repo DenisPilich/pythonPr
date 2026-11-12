@@ -149,7 +149,7 @@ only env changes; no AI call happens for a vacancy that fails hard filters.
 
 ---
 
-## Stage 5 — Automation (Celery) ⬜
+## Stage 5 — Automation (Celery) ✅
 
 **Why:** a monitor that must be run by hand is not a monitor.
 
@@ -167,6 +167,13 @@ only env changes; no AI call happens for a vacancy that fails hard filters.
 
 **Exit criteria:** with `docker compose up`, new vacancies appear in the database, get analysed, and
 notification rows are created — without any manual command.
+
+> Verified: the end-to-end integration test runs collection (mocked hh.ru) → pending pair discovery →
+> mock analysis → notification dispatch and asserts the delivered text. Lock contention, daily
+> quota, staleness sweep and task registration are covered separately. `celery report` loads the
+> worker configuration and `docker compose config` validates the new `worker` and `beat` services.
+> A live broker was not available in the sandbox, so broker transport itself is exercised in CI/the
+> compose stack rather than locally.
 
 ---
 

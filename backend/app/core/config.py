@@ -66,6 +66,15 @@ class Settings(BaseSettings):
     http_max_connections: int = 10
     http_user_agent: str = "AI-Job-Radar/0.1 (+https://github.com/your-handle/ai-job-radar)"
     collector_batch_size: int = 50
+    collect_interval_minutes: int = 15
+    stale_vacancy_days: int = 60
+
+    # --- scheduling ------------------------------------------------------
+    analyze_interval_minutes: int = 5
+    notify_interval_minutes: int = 2
+    stats_interval_minutes: int = 5
+    analysis_lookback_days: int = 14
+    notification_batch_size: int = 20
 
     # --- ai --------------------------------------------------------------
     ai_provider: Literal["mock", "openai"] = "mock"

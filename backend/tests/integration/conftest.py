@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
+import fakeredis.aioredis
 import httpx
 import pytest
 import pytest_asyncio
@@ -15,6 +17,31 @@ from app.core.config import Settings
 from app.main import create_app
 from app.models import Technology
 from app.normalization.taxonomy import load_taxonomy
+
+
+class StubDatabase:
+    """Hands the task/services the test session so the outer rollback isolates it."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    @asynccontextmanager
+    async def session(self) -> AsyncIterator[AsyncSession]:
+        yield self._session
+
+
+@pytest.fixture()
+def stub_database(db_session: AsyncSession) -> StubDatabase:
+    return StubDatabase(db_session)
+
+
+@pytest_asyncio.fixture()
+async def fake_redis() -> AsyncIterator[fakeredis.aioredis.FakeRedis]:
+    client = fakeredis.aioredis.FakeRedis(decode_responses=True)
+    try:
+        yield client
+    finally:
+        await client.aclose()
 
 
 async def insert_taxonomy(session: AsyncSession) -> None:

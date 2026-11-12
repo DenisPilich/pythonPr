@@ -5,8 +5,9 @@
 > clean domain model, scores every vacancy against *your* profile with an LLM, and pushes only the
 > relevant ones to Telegram. A web dashboard sits on top of the same API.
 
-**Status:** 🚧 under active development — Stages 0–4 complete (architecture, foundation, collection,
-read API, AI analysis). See [docs/ROADMAP.md](docs/ROADMAP.md) for stage-by-stage progress.
+**Status:** 🚧 under active development — Stages 0–5 complete (architecture, foundation, collection,
+read API, AI analysis, Celery automation). See [docs/ROADMAP.md](docs/ROADMAP.md) for stage-by-stage
+progress.
 
 ---
 
