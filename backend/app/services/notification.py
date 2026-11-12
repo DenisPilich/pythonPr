@@ -12,7 +12,7 @@ import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.enums import Recommendation
-from app.ports.vacancy_source import Notifier
+from app.ports.vacancy_source import NotificationMessage, Notifier
 from app.repositories.notifications import (
     NotificationContext,
     NotificationRepository,
@@ -41,13 +41,14 @@ class LoggingNotifier:
     def __init__(self) -> None:
         self._counter = 0
 
-    async def send_vacancy(self, chat_id: int, text: str) -> int:
+    async def send_vacancy(self, message: NotificationMessage) -> int:
         self._counter += 1
         logger.info(
             "notification_preview",
-            chat_id=chat_id,
+            chat_id=message.chat_id,
             message_id=self._counter,
-            preview=text[:240],
+            vacancy_id=str(message.vacancy_id),
+            preview=message.text[:240],
         )
         return self._counter
 
@@ -74,9 +75,9 @@ class NotificationService:
                 failed += 1
                 continue
 
-            text = self._render(context)
+            message = self._render(context)
             try:
-                message_id = await self._notifier.send_vacancy(context.user.telegram_id, text)
+                message_id = await self._notifier.send_vacancy(message)
             except Exception as exc:
                 logger.exception(
                     "notification_delivery_failed",
@@ -102,7 +103,7 @@ class NotificationService:
         return NotificationReport(enqueued=enqueued, sent=sent, failed=failed)
 
     @staticmethod
-    def _render(context: NotificationContext) -> str:
+    def _render(context: NotificationContext) -> NotificationMessage:
         vacancy = context.vacancy
         analysis = context.analysis
         references = sorted(vacancy.sources, key=lambda ref: ref.first_seen_at)
@@ -122,4 +123,9 @@ class NotificationService:
             recommendation=recommendation,
             url=url,
         )
-        return text[:MAX_MESSAGE_LENGTH]
+        return NotificationMessage(
+            chat_id=context.user.telegram_id,
+            text=text[:MAX_MESSAGE_LENGTH],
+            vacancy_id=vacancy.id,
+            url=url,
+        )

@@ -6,6 +6,7 @@ only reason those libraries are replaceable and testable with fakes.
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import AsyncIterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -51,7 +52,15 @@ class VacancySource(Protocol):
     def collect(self, ctx: CollectorContext) -> AsyncIterator[CollectedVacancy]: ...
 
 
+@dataclass(frozen=True, slots=True)
+class NotificationMessage:
+    chat_id: int
+    text: str
+    vacancy_id: uuid.UUID
+    url: str
+
+
 class Notifier(Protocol):
     """Delivery channel for a matched vacancy (implemented by the bot package)."""
 
-    async def send_vacancy(self, chat_id: int, text: str) -> int: ...
+    async def send_vacancy(self, message: NotificationMessage) -> int: ...

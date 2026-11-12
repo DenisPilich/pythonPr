@@ -177,7 +177,7 @@ notification rows are created — without any manual command.
 
 ---
 
-## Stage 6 — Telegram bot ⬜
+## Stage 6 — Telegram bot ✅
 
 **Why:** the delivery channel the user actually touches; also the most input-validation-sensitive
 surface.
@@ -197,6 +197,11 @@ renderer snapshots, invalid input handling.
 
 **Exit criteria:** a real Telegram account can create a profile, receive a match, and move it through
 `viewed → saved → applied`; the dashboard reflects it.
+
+> Verified: 21 bot tests cover text rendering, input parsing, profile edits, status transitions,
+> the notification keyboard and a full dispatcher pass (`/start` + `save` callback) against a fake
+> Bot. Live polling requires `TELEGRAM_BOT_TOKEN`; without it the bot container exits cleanly and the
+> rest of the stack keeps running.
 
 ---
 

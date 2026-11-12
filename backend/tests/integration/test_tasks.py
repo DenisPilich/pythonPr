@@ -20,6 +20,7 @@ from app.domain.enums import (
     UserVacancyStatus,
 )
 from app.models import CollectorRun, Notification, Source, UserVacancy, Vacancy
+from app.ports.vacancy_source import NotificationMessage
 from app.tasks.analysis import analyze_vacancy_async, pending_analysis_pairs
 from app.tasks.collection import collect_source_async
 from app.tasks.locks import LockNotAcquiredError, redis_lock
@@ -40,8 +41,8 @@ class RecordingNotifier:
     def __init__(self) -> None:
         self.messages: list[tuple[int, str]] = []
 
-    async def send_vacancy(self, chat_id: int, text: str) -> int:
-        self.messages.append((chat_id, text))
+    async def send_vacancy(self, message: NotificationMessage) -> int:
+        self.messages.append((message.chat_id, message.text))
         return len(self.messages)
 
 

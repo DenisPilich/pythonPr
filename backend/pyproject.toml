@@ -31,6 +31,7 @@ dependencies = [
     "pyyaml>=6.0",
     "feedparser>=6.0",
     "celery>=5.4",
+    "aiogram>=3.13",
 ]
 
 [project.optional-dependencies]

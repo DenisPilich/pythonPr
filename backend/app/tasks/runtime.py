@@ -18,12 +18,12 @@ from typing import Any
 from redis.asyncio import Redis
 
 from app.ai.factory import build_ai_provider, build_fallback_provider
+from app.bot.notifier import build_notifier
 from app.core.config import Settings, get_settings
 from app.core.redis import create_redis
 from app.db.session import Database
 from app.ports.ai_provider import AIProvider
 from app.ports.vacancy_source import Notifier
-from app.services.notification import LoggingNotifier
 
 
 @dataclass
@@ -50,7 +50,7 @@ def _build(settings: Settings | None = None) -> TaskRuntime:
         redis=create_redis(settings),
         provider=provider,
         fallback=build_fallback_provider(settings),
-        notifier=LoggingNotifier(),
+        notifier=build_notifier(settings),
         loop=asyncio.new_event_loop(),
     )
 

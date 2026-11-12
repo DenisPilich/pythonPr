@@ -96,6 +96,20 @@ services:
     command: celery -A app.tasks.celery_app:celery_app beat --loglevel=INFO
     restart: unless-stopped
 
+  bot:
+    build:
+      context: ./backend
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: python -m app.bot
+    restart: on-failure
+
 volumes:
   pgdata:
   redisdata:
