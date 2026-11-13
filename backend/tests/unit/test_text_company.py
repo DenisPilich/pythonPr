@@ -59,16 +59,12 @@ def test_company_decodes_html_entities() -> None:
 
 def test_repairs_double_encoded_utf8() -> None:
     assert repair_mojibake("Engineer â€” Platform") == "Engineer — Platform"
-    assert repair_mojibake("Engineer \u00e2\u0080\u0094 Platform") == (
-        "Engineer — Platform"
-    )
+    assert repair_mojibake("Engineer \u00e2\u0080\u0094 Platform") == ("Engineer — Platform")
     assert repair_mojibake("CafÃ©") == "Café"
 
 
 def test_repair_mojibake_leaves_clean_text_alone() -> None:
-    assert repair_mojibake("Senior Python Engineer — Remote") == (
-        "Senior Python Engineer — Remote"
-    )
+    assert repair_mojibake("Senior Python Engineer — Remote") == ("Senior Python Engineer — Remote")
 
 
 def test_company_handles_unicode_and_empty() -> None:
