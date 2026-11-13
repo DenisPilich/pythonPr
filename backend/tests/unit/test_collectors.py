@@ -12,7 +12,7 @@ from app.collectors.http import HttpClient
 from app.collectors.registry import build_collector
 from app.collectors.sources.arbeitnow import ArbeitnowCollector
 from app.collectors.sources.hh import HhCollector
-from app.collectors.sources.remoteok import RemoteOkCollector
+from app.collectors.sources.remoteok import RemoteOkCollector, is_relevant_remoteok
 from app.collectors.sources.remotive import RemotiveCollector
 from app.collectors.sources.rss import WeWorkRemotelyCollector
 from app.core.config import Settings
@@ -106,6 +106,25 @@ async def test_remoteok_skips_legal_notice_and_maps_salary(settings: Settings) -
     assert vacancy.salary.period is SalaryPeriod.YEAR
     assert vacancy.salary.min == 120000
     assert vacancy.work_format_hint is WorkFormat.REMOTE
+
+
+@pytest.mark.parametrize(
+    ("position", "tags", "expected"),
+    [
+        ("Senior Python Engineer", [], True),
+        ("Data Engineer", ["data"], True),
+        ("AI Developer", ["python"], True),
+        ("Patient Care Specialist", ["medical"], False),
+        ("Strategy & Operations Coach", ["sales"], False),
+        ("Bilingual Patient Engagement Specialist", [], False),
+        ("Travel Support Specialist", [], False),
+        ("Product Designer", ["design"], False),
+    ],
+)
+def test_remoteok_keeps_only_developer_roles(
+    position: str, tags: list[str], expected: bool
+) -> None:
+    assert is_relevant_remoteok({"position": position, "tags": tags}) is expected
 
 
 @respx.mock

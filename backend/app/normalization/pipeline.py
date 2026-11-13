@@ -17,6 +17,7 @@ from app.normalization.taxonomy import Taxonomy
 from app.normalization.technologies import TechnologyExtractor
 from app.normalization.text import html_to_text
 from app.normalization.work_format import detect_work_format
+from app.utils.text import repair_mojibake
 
 
 class NormalizationPipeline:
@@ -24,8 +25,8 @@ class NormalizationPipeline:
         self._extractor = TechnologyExtractor(taxonomy)
 
     def normalize(self, vacancy: CollectedVacancy) -> NormalizedVacancy:
-        title = " ".join((vacancy.title or "").split())
-        description_clean = html_to_text(vacancy.description)
+        title = " ".join(repair_mojibake(vacancy.title or "").split())
+        description_clean = repair_mojibake(html_to_text(vacancy.description))
         identity = normalize_company(vacancy.company_name)
         city, country_code = parse_location(vacancy.location_raw)
         work_format = detect_work_format(

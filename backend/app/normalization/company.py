@@ -7,6 +7,7 @@ creates three rows per week.
 
 from __future__ import annotations
 
+import html
 import re
 from dataclasses import dataclass
 
@@ -60,7 +61,7 @@ class CompanyIdentity:
 
 def normalize_company(raw: str) -> CompanyIdentity:
     """Return a display form and a comparison key."""
-    display = _SPACE_RE.sub(" ", (raw or "").strip()).strip(" ,;-–—|")
+    display = _SPACE_RE.sub(" ", html.unescape(raw or "").strip()).strip(" ,;-–—|")
     if not display:
         return CompanyIdentity(display="Unknown", key="unknown")
 
