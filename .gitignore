@@ -36,6 +36,7 @@ frontend/coverage/
 .idea/
 .vscode/
 .preview/
+portfolio-assets/
 *.swp
 .DS_Store
 Thumbs.db
