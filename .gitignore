@@ -35,6 +35,7 @@ frontend/coverage/
 # --- IDE / OS -------------------------------------------------------------
 .idea/
 .vscode/
+.preview/
 *.swp
 .DS_Store
 Thumbs.db
