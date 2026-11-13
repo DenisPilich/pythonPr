@@ -1,11 +1,13 @@
 import { FormEvent, useState } from "react";
+import type { ReactNode } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { api } from "../api/client";
 import type { JobFilters } from "../api/types";
 import JobCard from "../components/JobCard";
 import {
+  Badge,
   Button,
   Card,
   EmptyState,
@@ -19,6 +21,17 @@ import {
 const PAGE_SIZE = 12;
 
 const EMPTY_FILTERS: JobFilters = { limit: PAGE_SIZE, offset: 0 };
+
+function Field({ flag, children }: { flag: string; children: ReactNode }) {
+  return (
+    <label className="grid gap-1">
+      <span className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
+        {flag}
+      </span>
+      {children}
+    </label>
+  );
+}
 
 export default function JobsPage() {
   const [query, setQuery] = useState("");
@@ -73,114 +86,163 @@ export default function JobsPage() {
       <PageHeader
         title="Vacancies"
         subtitle="Search the normalized feed, then open a vacancy for the AI verdict."
-        actions={
-          <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            {data?.total ?? 0} results
-          </span>
-        }
+        actions={<Badge tone="sky">{data?.total ?? 0} matches</Badge>}
       />
 
-      <Card className="mb-6 p-4">
-        <form onSubmit={submit} className="grid gap-3 md:grid-cols-12">
-          <div className="relative md:col-span-4">
-            <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-500" />
-            <Input
-              className="pl-9"
-              placeholder="Search title or description…"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label="Search vacancies"
-            />
+      <Card className="corner-frame mb-5">
+        <div className="flex items-center justify-between border-b border-slate-800 px-4 py-2.5">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+            <span className="text-emerald-400">$</span> radar query
+          </p>
+          <span className="text-[9px] uppercase tracking-[0.16em] text-slate-600">
+            filters
+          </span>
+        </div>
+
+        <form onSubmit={submit} className="grid gap-3 p-4 md:grid-cols-12">
+          <div className="md:col-span-4">
+            <Field flag="--q">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-600" />
+                <Input
+                  className="pl-8"
+                  placeholder="title or description…"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  aria-label="Search vacancies"
+                />
+              </div>
+            </Field>
           </div>
-          <Select
-            className="md:col-span-2"
-            value={technology}
-            onChange={(event) => setTechnology(event.target.value)}
-            aria-label="Technology"
-          >
-            <option value="">Any technology</option>
-            {technologies.data?.items.map((tech) => (
-              <option key={tech.id} value={tech.slug}>
-                {tech.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            className="md:col-span-2"
-            value={seniority}
-            onChange={(event) => setSeniority(event.target.value)}
-            aria-label="Seniority"
-          >
-            <option value="">Any level</option>
-            {["junior", "middle", "senior", "lead"].map((level) => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </Select>
-          <Select
-            className="md:col-span-2"
-            value={workFormat}
-            onChange={(event) => setWorkFormat(event.target.value)}
-            aria-label="Work format"
-          >
-            <option value="">Any format</option>
-            {["remote", "hybrid", "office"].map((format) => (
-              <option key={format} value={format}>
-                {format}
-              </option>
-            ))}
-          </Select>
-          <Input
-            className="md:col-span-2"
-            type="number"
-            min={0}
-            placeholder="Min € / month"
-            value={minSalary}
-            onChange={(event) => setMinSalary(event.target.value)}
-            aria-label="Minimum salary"
-          />
-          <div className="flex gap-2 md:col-span-4">
-            <Button type="submit">Apply filters</Button>
+
+          <div className="md:col-span-2">
+            <Field flag="--tech">
+              <Select
+                value={technology}
+                onChange={(event) => setTechnology(event.target.value)}
+                aria-label="Technology"
+              >
+                <option value="">any</option>
+                {technologies.data?.items.map((tech) => (
+                  <option key={tech.id} value={tech.slug}>
+                    {tech.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <div className="md:col-span-2">
+            <Field flag="--level">
+              <Select
+                value={seniority}
+                onChange={(event) => setSeniority(event.target.value)}
+                aria-label="Seniority"
+              >
+                <option value="">any</option>
+                {["junior", "middle", "senior", "lead"].map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <div className="md:col-span-2">
+            <Field flag="--format">
+              <Select
+                value={workFormat}
+                onChange={(event) => setWorkFormat(event.target.value)}
+                aria-label="Work format"
+              >
+                <option value="">any</option>
+                {["remote", "hybrid", "office"].map((format) => (
+                  <option key={format} value={format}>
+                    {format}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <div className="md:col-span-2">
+            <Field flag="--salary">
+              <Input
+                type="number"
+                min={0}
+                placeholder="min € / month"
+                value={minSalary}
+                onChange={(event) => setMinSalary(event.target.value)}
+                aria-label="Minimum salary"
+              />
+            </Field>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-2 md:col-span-3">
+            <Button type="submit">[ run ]</Button>
             <Button type="button" variant="ghost" onClick={reset}>
-              Reset
+              [ reset ]
             </Button>
           </div>
-          <Select
-            className="md:col-span-3"
-            value={sort}
-            onChange={(event) => setSort(event.target.value)}
-            aria-label="Sort"
-          >
-            <option value="published_at">Newest first</option>
-            <option value="salary">Highest salary</option>
-            <option value="title">Title A–Z</option>
-          </Select>
+
+          <div className="md:col-span-3">
+            <Field flag="--sort">
+              <Select
+                value={sort}
+                onChange={(event) => setSort(event.target.value)}
+                aria-label="Sort"
+              >
+                <option value="published_at">newest first</option>
+                <option value="salary">highest salary</option>
+                <option value="title">title a–z</option>
+              </Select>
+            </Field>
+          </div>
+
+          <p className="hidden items-end justify-end pb-2 text-right text-[9px] uppercase tracking-[0.14em] text-slate-600 md:col-span-6 md:flex">
+            // enter runs query · filters combine with AND
+          </p>
         </form>
       </Card>
 
-      {jobs.isPending ? <Spinner label="Loading vacancies" /> : null}
+      {jobs.isPending ? <Spinner label="querying vacancies" /> : null}
       {jobs.isError ? (
         <ErrorState message={jobs.error.message} onRetry={() => jobs.refetch()} />
       ) : null}
 
+      {data ? (
+        <div className="mb-3 flex items-center justify-between text-[9px] uppercase tracking-[0.16em] text-slate-500">
+          <span>
+            <span className="text-sky-400">&gt;&gt;</span> {data.total} records ·
+            offset {data.offset}
+          </span>
+          <span>
+            page {page}/{pages}
+          </span>
+        </div>
+      ) : null}
+
       {data && data.items.length === 0 ? (
         <EmptyState
-          title="No vacancies match these filters"
+          title="No vacancies match"
           description="Try a broader query or reset the filters. New vacancies arrive with every collection run."
-          action={<Button onClick={reset}>Reset filters</Button>}
+          action={<Button onClick={reset}>[ reset filters ]</Button>}
         />
       ) : null}
 
-      <div className="grid gap-3">
-        {data?.items.map((job) => <JobCard key={job.id} job={job} />)}
+      <div className="grid gap-2.5">
+        {data?.items.map((job) => (
+          <JobCard key={job.id} job={job} />
+        ))}
       </div>
 
       {data && data.total > PAGE_SIZE ? (
-        <div className="mt-6 flex items-center justify-between text-sm text-slate-400">
+        <div className="mt-5 flex items-center justify-between border-t border-slate-800 pt-3 text-[9px] uppercase tracking-[0.16em] text-slate-500">
           <span>
-            Page {page} of {pages}
+            {filters.offset ?? 0}–
+            {Math.min((filters.offset ?? 0) + PAGE_SIZE, data.total)} of{" "}
+            {data.total}
           </span>
           <div className="flex gap-2">
             <Button
@@ -194,7 +256,7 @@ export default function JobsPage() {
                 }))
               }
             >
-              Previous
+              [ prev ]
             </Button>
             <Button
               variant="outline"
@@ -207,7 +269,7 @@ export default function JobsPage() {
                 }))
               }
             >
-              Next
+              [ next ]
             </Button>
           </div>
         </div>

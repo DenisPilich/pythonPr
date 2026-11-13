@@ -51,7 +51,9 @@ describe("JobCard", () => {
     expect(screen.getByText("FastAPI")).toBeInTheDocument();
     expect(screen.getByText("~€5 000 / month")).toBeInTheDocument();
 
-    const link = screen.getByRole("link", { name: "Senior Python Developer" });
+    const link = screen.getByRole("link", {
+      name: "Senior Python Developer at Acme",
+    });
     expect(link).toHaveAttribute("href", "/jobs/job-1");
   });
 });

@@ -1,98 +1,317 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { BriefcaseBusiness, History, LayoutDashboard, Radar, Sparkles, UserRound } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { ExternalLink, Menu, Radio, X } from "lucide-react";
 
 import { cn } from "../lib/cn";
 
+const THEMES = ["ultraviolet", "phosphor", "amber"] as const;
+type Theme = (typeof THEMES)[number];
+
 const NAV = [
-  { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
-  { to: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
-  { to: "/history", label: "History", icon: History },
-  { to: "/profile", label: "Profile", icon: UserRound },
+  { to: "/", label: "overview", code: "01", end: true },
+  { to: "/jobs", label: "vacancies", code: "02" },
+  { to: "/history", label: "history", code: "03" },
+  { to: "/profile", label: "profile", code: "04" },
 ];
 
+const DOCS_URL =
+  import.meta.env.VITE_DOCS_URL ?? "http://localhost:8000/docs";
+
+function readTheme(): Theme {
+  try {
+    const requested = new URLSearchParams(window.location.search).get("theme");
+    if (requested && (THEMES as readonly string[]).includes(requested)) {
+      return requested as Theme;
+    }
+    const stored = localStorage.getItem("radar:theme");
+    if (stored && (THEMES as readonly string[]).includes(stored)) {
+      return stored as Theme;
+    }
+  } catch {
+    // private mode
+  }
+  return "ultraviolet";
+}
+
+function readCrt(): boolean {
+  try {
+    return localStorage.getItem("radar:crt") === "on";
+  } catch {
+    return false;
+  }
+}
+
+function RadarMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
+      <circle cx="16" cy="16" r="12.5" stroke="currentColor" strokeWidth="1" opacity=".55" />
+      <circle cx="16" cy="16" r="7" stroke="currentColor" strokeWidth="1" opacity=".3" />
+      <path d="M16 16 26.5 9.5" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="16" cy="16" r="1.8" fill="currentColor" />
+      <circle cx="22" cy="11.5" r="1.4" fill="currentColor" opacity=".85" />
+      <path d="M3.5 16h3M25.5 16h3M16 3.5v3M16 25.5v3" stroke="currentColor" strokeWidth="1" opacity=".45" />
+    </svg>
+  );
+}
+
+function pageName(pathname: string): string {
+  if (pathname.startsWith("/jobs/")) return "vacancy";
+  if (pathname.startsWith("/jobs")) return "vacancies";
+  if (pathname.startsWith("/history")) return "history";
+  if (pathname.startsWith("/profile")) return "profile";
+  return "overview";
+}
+
 export default function Layout() {
+  const location = useLocation();
+  const glowRef = useRef<HTMLDivElement>(null);
+  const [theme, setTheme] = useState<Theme>(readTheme);
+  const [crt, setCrt] = useState<boolean>(readCrt);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [clock, setClock] = useState(() => new Date());
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem("radar:theme", theme);
+    } catch {
+      // private mode
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (crt) document.documentElement.dataset.crt = "on";
+    else delete document.documentElement.dataset.crt;
+    try {
+      localStorage.setItem("radar:crt", crt ? "on" : "off");
+    } catch {
+      // private mode
+    }
+  }, [crt]);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!location.hash) return;
+    const target = decodeURIComponent(location.hash.slice(1));
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById(target);
+      if (!element) return;
+      const top = element.getBoundingClientRect().top + window.scrollY - 72;
+      window.scrollTo({ top, behavior: "auto" });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const element = glowRef.current;
+    if (!element) return;
+    let frame = 0;
+    function onPointerMove(event: PointerEvent) {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        element!.style.transform = `translate(${event.clientX - 300}px, ${event.clientY - 300}px)`;
+      });
+    }
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "F2") return;
+      event.preventDefault();
+      setTheme((current) => {
+        const index = THEMES.indexOf(current);
+        return THEMES[(index + 1) % THEMES.length];
+      });
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const time = clock.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
     <div className="min-h-screen">
-      <div className="mx-auto flex w-full max-w-7xl">
-        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-slate-800/70 px-4 py-6 md:flex">
-          <div className="flex items-center gap-2 px-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/15 text-sky-400">
-              <Radar className="h-5 w-5" />
+      <div ref={glowRef} className="pointer-glow" aria-hidden />
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-800 bg-slate-950/85 backdrop-blur-md">
+        <div className="mx-auto flex h-[58px] max-w-[1440px] items-center gap-5 px-4 md:px-8">
+          <NavLink to="/" className="group flex shrink-0 items-center gap-2.5">
+            <RadarMark className="h-7 w-7 text-sky-400 transition-transform duration-300 group-hover:rotate-90" />
+            <span className="font-display text-[26px] leading-none tracking-tight text-white">
+              AI_JOB_RADAR
             </span>
-            <div>
-              <p className="text-sm font-semibold text-white">AI Job Radar</p>
-              <p className="text-[11px] text-slate-500">matched vacancies</p>
-            </div>
-          </div>
+            <span className="hidden text-[9px] uppercase tracking-[0.18em] text-slate-600 sm:inline">
+              v0.1.0
+            </span>
+          </NavLink>
 
-          <nav className="mt-8 flex flex-col gap-1">
-            {NAV.map(({ to, label, icon: Icon, end }) => (
+          <nav className="ml-2 hidden items-center gap-1 md:flex" aria-label="Main">
+            {NAV.map((item) => (
               <NavLink
-                key={to}
-                to={to}
-                end={end}
+                key={item.to}
+                to={item.to}
+                end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                    "group relative flex items-center gap-1.5 px-3 py-2 text-[10px] uppercase tracking-[0.16em] transition-colors",
                     isActive
-                      ? "bg-sky-500/10 text-sky-300"
-                      : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200",
+                      ? "text-white"
+                      : "text-slate-400 hover:text-sky-300",
                   )
                 }
               >
-                <Icon className="h-4 w-4" />
-                {label}
+                {({ isActive }) => (
+                  <>
+                    <span className="nav-number">{item.code}</span>
+                    <span>{item.label}</span>
+                    <span
+                      className={cn(
+                        "absolute inset-x-3 -bottom-[1px] h-px bg-sky-500 transition-opacity",
+                        isActive ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>
 
-          <div className="mt-auto rounded-xl border border-slate-800 bg-slate-900/50 p-3 text-xs text-slate-400">
-            <div className="flex items-center gap-2 text-slate-300">
-              <Sparkles className="h-3.5 w-3.5 text-sky-400" />
-              AI analysis on
-            </div>
-            <p className="mt-1 text-[11px] text-slate-500">
-              Scores are cached per profile and prompt version.
-            </p>
+          <div className="ml-auto flex items-center gap-2">
+            <a
+              href={DOCS_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="hidden items-center gap-1 border border-slate-700 px-2.5 py-1.5 text-[9px] uppercase tracking-[0.14em] text-slate-400 transition-colors hover:border-sky-500 hover:text-sky-300 sm:inline-flex"
+            >
+              api <ExternalLink className="h-3 w-3" />
+            </a>
+            <button
+              type="button"
+              onClick={() => setCrt((value) => !value)}
+              className="hidden border border-slate-700 px-2.5 py-1.5 text-[9px] uppercase tracking-[0.14em] text-slate-400 transition-colors hover:border-sky-500 hover:text-sky-300 lg:inline-flex"
+              aria-pressed={crt}
+              title="Toggle CRT scanlines"
+            >
+              crt:{crt ? "on" : "off"}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setTheme(
+                  THEMES[
+                    (THEMES.indexOf(theme) + 1) % THEMES.length
+                  ],
+                )
+              }
+              className="inline-flex items-center gap-1.5 border border-slate-700 px-2.5 py-1.5 text-[9px] uppercase tracking-[0.14em] text-slate-300 transition-colors hover:border-sky-500 hover:text-sky-300"
+              title="Cycle theme (F2)"
+            >
+              <Radio className="h-3 w-3 text-sky-400" />
+              {theme}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((value) => !value)}
+              className="inline-flex border border-slate-700 p-1.5 text-slate-300 md:hidden"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+            >
+              {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
           </div>
-        </aside>
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-slate-800/70 bg-slate-950/80 backdrop-blur md:hidden">
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-2">
-                <Radar className="h-5 w-5 text-sky-400" />
-                <span className="text-sm font-semibold text-white">AI Job Radar</span>
-              </div>
-            </div>
-            <nav className="flex gap-1 overflow-x-auto px-3 pb-2">
-              {NAV.map(({ to, label, end }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  end={end}
-                  className={({ isActive }) =>
-                    cn(
-                      "whitespace-nowrap rounded-lg px-3 py-1.5 text-xs",
-                      isActive ? "bg-sky-500/10 text-sky-300" : "text-slate-400",
-                    )
-                  }
-                >
-                  {label}
-                </NavLink>
-              ))}
-            </nav>
-          </header>
-
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-8 md:py-10">
-            <Outlet />
-          </main>
-
-          <footer className="border-t border-slate-900 px-6 py-4 text-center text-[11px] text-slate-600">
-            AI Job Radar · FastAPI + PostgreSQL + Celery + React
-          </footer>
         </div>
-      </div>
+
+        {menuOpen ? (
+          <nav
+            className="border-t border-slate-800 bg-slate-950/95 px-4 py-3 md:hidden"
+            aria-label="Mobile"
+          >
+            {NAV.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center justify-between border-b border-slate-800/60 py-2.5 text-[11px] uppercase tracking-[0.16em]",
+                    isActive ? "text-sky-300" : "text-slate-400",
+                  )
+                }
+              >
+                <span>{item.label}</span>
+                <span className="nav-number">{item.code}</span>
+              </NavLink>
+            ))}
+          </nav>
+        ) : null}
+      </header>
+
+      <main className="mx-auto w-full max-w-[1440px] px-4 pb-16 pt-[82px] md:px-8 md:pt-[92px]">
+        <div key={location.pathname} className="page-enter">
+          <Outlet />
+        </div>
+      </main>
+
+      <footer className="statusbar fixed inset-x-0 bottom-0 z-50 h-7">
+        <div className="mx-auto flex h-full max-w-[1440px] items-center gap-3 px-4 text-[9px] uppercase tracking-[0.14em] text-slate-500 md:px-8">
+          <span className="status-dot" aria-hidden />
+          <span className="text-slate-300">radar online</span>
+          <span className="hidden text-slate-700 sm:inline">/</span>
+          <span className="hidden sm:inline">{pageName(location.pathname)}</span>
+
+          <span className="mx-auto hidden items-center gap-3 md:flex">
+            <button
+              type="button"
+              onClick={() => setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length])}
+              className="transition-colors hover:text-sky-300"
+            >
+              <span className="kbd">F2</span> theme
+            </button>
+            <button
+              type="button"
+              onClick={() => setCrt((value) => !value)}
+              className="transition-colors hover:text-sky-300"
+            >
+              <span className="kbd">CRT</span> {crt ? "on" : "off"}
+            </button>
+            <span className="text-slate-700">·</span>
+            <span>fastapi + celery</span>
+          </span>
+
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden text-slate-600 sm:inline">theme:{theme}</span>
+            <span className="text-slate-400">{time}</span>
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="transition-colors hover:text-sky-300"
+            >
+              top ↑
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

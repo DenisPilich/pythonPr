@@ -36,7 +36,7 @@ export default function JobDetailPage() {
     },
   });
 
-  if (job.isPending) return <Spinner label="Loading vacancy" />;
+  if (job.isPending) return <Spinner label="opening vacancy" />;
   if (job.isError) {
     return <ErrorState message={job.error.message} onRetry={() => job.refetch()} />;
   }
@@ -48,100 +48,128 @@ export default function JobDetailPage() {
     <div>
       <Link
         to="/jobs"
-        className="mb-5 inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-sky-300"
+        className="mb-4 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-slate-500 transition-colors hover:text-sky-300"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to vacancies
+        <ArrowLeft className="h-3.5 w-3.5" /> cd ../vacancies
       </Link>
 
-      <Card className="p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-white">{vacancy.title}</h1>
-            <p className="mt-1 text-slate-400">
-              {vacancy.company.name} · {vacancy.location_raw ?? "Location not specified"}
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Badge tone="sky">{titleCase(vacancy.work_format)}</Badge>
-              <Badge tone="violet">{titleCase(vacancy.seniority)}</Badge>
-              <Badge tone="neutral">{vacancy.language.toUpperCase()}</Badge>
-              <span className="text-sm text-slate-400">{formatSalary(vacancy)}</span>
+      <Card className="corner-frame overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-slate-800 px-4 py-2">
+          <span className="h-2 w-2 border border-sky-500/60 bg-sky-500/20" />
+          <span className="h-2 w-2 border border-slate-700" />
+          <span className="h-2 w-2 border border-slate-700" />
+          <span className="ml-2 truncate text-[9px] uppercase tracking-[0.16em] text-slate-500">
+            job://{vacancy.id.slice(0, 8)} · {vacancy.sources[0]?.source ?? "manual"}
+          </span>
+          <span className="ml-auto hidden text-[9px] uppercase tracking-[0.16em] text-slate-600 sm:inline">
+            [ posting ]
+          </span>
+        </div>
+
+        <div className="p-5 md:p-6">
+          <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+            <div className="min-w-0">
+              <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500">
+                {vacancy.company.name} / {vacancy.location_raw ?? "location unknown"}
+              </p>
+              <h1 className="mt-2 max-w-3xl font-display text-4xl leading-[0.95] text-white md:text-5xl">
+                {vacancy.title}
+              </h1>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <Badge tone="sky">{titleCase(vacancy.work_format)}</Badge>
+                <Badge tone="violet">{titleCase(vacancy.seniority)}</Badge>
+                <Badge tone="neutral">{vacancy.language.toUpperCase()}</Badge>
+                <span className="text-[10px] text-slate-400">
+                  {formatSalary(vacancy)}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              {verdict ? <ScoreBadge score={verdict.match_score} /> : null}
+              {vacancy.url ? (
+                <a href={vacancy.url} target="_blank" rel="noreferrer">
+                  <Button variant="outline">
+                    [ source ] <ExternalLink className="h-3 w-3" />
+                  </Button>
+                </a>
+              ) : null}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {verdict ? <ScoreBadge score={verdict.match_score} /> : null}
-            {vacancy.url ? (
-              <a href={vacancy.url} target="_blank" rel="noreferrer">
-                <Button variant="outline">
-                  Open posting <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-              </a>
-            ) : null}
+
+          <div className="mt-4 flex flex-wrap gap-1">
+            {vacancy.technologies.map((tech) => (
+              <span key={tech.slug} className="tech-chip">
+                {tech.name}
+              </span>
+            ))}
           </div>
-        </div>
 
-        <div className="mt-4 flex flex-wrap gap-1.5">
-          {vacancy.technologies.map((tech) => (
-            <span
-              key={tech.slug}
-              className="rounded-md bg-slate-800/70 px-2 py-0.5 text-[11px] text-slate-300"
-            >
-              {tech.name}
-            </span>
-          ))}
+          <p className="mt-4 border-t border-slate-800 pt-3 text-[9px] uppercase tracking-[0.14em] text-slate-500">
+            published {formatDate(vacancy.published_at)} · first seen{" "}
+            {formatDate(vacancy.first_seen_at)} · {vacancy.sources.length} source(s)
+          </p>
         </div>
-
-        <p className="mt-4 text-xs text-slate-500">
-          Published {formatDate(vacancy.published_at)} · first seen{" "}
-          {formatDate(vacancy.first_seen_at)} · {vacancy.sources.length} source(s)
-        </p>
       </Card>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader title="Description" subtitle="Cleaned text used for matching" />
-          <div className="max-h-[560px] overflow-y-auto whitespace-pre-line px-5 py-4 text-sm leading-6 text-slate-300">
+          <CardHeader
+            title="description.md"
+            subtitle="cleaned text used for matching"
+            action={<span className="text-[9px] text-slate-600">[ read ]</span>}
+          />
+          <div className="max-h-[620px] overflow-y-auto whitespace-pre-line px-5 py-4 text-[11px] leading-6 text-slate-300">
             {vacancy.description || "No description provided by the source."}
           </div>
         </Card>
 
         <Card>
           <CardHeader
-            title="AI analysis"
+            title="ai_analysis.json"
             subtitle={
               verdict
                 ? `${verdict.provider} · ${verdict.model} · prompt ${verdict.prompt_version}`
-                : "Not analysed yet"
+                : "no verdict yet"
             }
             action={
               verdict?.is_degraded ? <Badge tone="amber">degraded</Badge> : undefined
             }
           />
           <div className="p-5">
-            {analysis.isPending ? <Spinner label="Loading verdict" /> : null}
+            {analysis.isPending ? <Spinner label="loading verdict" /> : null}
 
             {!verdict && !analysis.isPending ? (
               <div className="text-center">
-                <Sparkles className="mx-auto h-8 w-8 text-sky-400" />
-                <p className="mt-3 text-sm text-slate-400">
-                  Compare this vacancy with the current profile.
+                <Sparkles className="mx-auto h-7 w-7 text-sky-400" />
+                <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                  no cached analysis
+                </p>
+                <p className="mt-2 text-[11px] leading-5 text-slate-400">
+                  Compare this vacancy with the current profile. The result is
+                  cached by profile hash and prompt version.
                 </p>
                 <Button
                   className="mt-4"
                   onClick={() => analyze.mutate()}
                   disabled={analyze.isPending}
                 >
-                  {analyze.isPending ? "Analysing…" : "Analyse with AI"}
+                  {analyze.isPending ? "[ analysing ]" : "[ run analysis ]"}
                 </Button>
                 {analyze.isError ? (
-                  <p className="mt-3 text-xs text-rose-300">{analyze.error.message}</p>
+                  <p className="mt-3 text-[10px] text-rose-300">
+                    {analyze.error.message}
+                  </p>
                 ) : null}
               </div>
             ) : null}
 
             {verdict ? (
               <div>
-                <div className="flex items-center justify-between">
-                  <ScoreBadge score={verdict.match_score} />
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
+                    match_score
+                  </span>
                   <Badge
                     tone={
                       verdict.recommendation === "apply"
@@ -151,25 +179,36 @@ export default function JobDetailPage() {
                           : "rose"
                     }
                   >
-                    {verdict.recommendation.toUpperCase()}
+                    {verdict.recommendation}
                   </Badge>
                 </div>
+                <p className="mt-1 font-display text-6xl leading-none text-sky-300">
+                  {verdict.match_score}%
+                </p>
 
-                <p className="mt-4 text-sm leading-6 text-slate-300">{verdict.reason}</p>
+                <p className="mt-4 border-l border-sky-500/50 pl-3 text-[11px] leading-5 text-slate-300">
+                  {verdict.reason}
+                </p>
 
                 <div className="mt-4 border-t border-slate-800 pt-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Experience</p>
-                  <p className="mt-1 text-sm text-slate-300">{verdict.experience_match}</p>
+                  <p className="text-[9px] uppercase tracking-[0.18em] text-slate-500">
+                    experience_match
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-300">
+                    {verdict.experience_match}
+                  </p>
                 </div>
 
                 {verdict.strong_matches.length > 0 ? (
                   <div className="mt-4">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
-                      Strong matches
+                    <p className="text-[9px] uppercase tracking-[0.18em] text-slate-500">
+                      strong_matches
                     </p>
-                    <ul className="mt-1 space-y-1 text-sm text-emerald-300">
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-emerald-300">
                       {verdict.strong_matches.map((skill) => (
-                        <li key={skill}>+ {skill}</li>
+                        <li key={skill}>
+                          <span className="text-emerald-500">+</span> {skill}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -177,12 +216,14 @@ export default function JobDetailPage() {
 
                 {verdict.missing_skills.length > 0 ? (
                   <div className="mt-4">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
-                      Missing skills
+                    <p className="text-[9px] uppercase tracking-[0.18em] text-slate-500">
+                      missing_skills
                     </p>
-                    <ul className="mt-1 space-y-1 text-sm text-rose-300">
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-rose-300">
                       {verdict.missing_skills.map((skill) => (
-                        <li key={skill}>− {skill}</li>
+                        <li key={skill}>
+                          <span className="text-rose-500">−</span> {skill}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -190,10 +231,14 @@ export default function JobDetailPage() {
 
                 {verdict.red_flags.length > 0 ? (
                   <div className="mt-4">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">Red flags</p>
-                    <ul className="mt-1 space-y-1 text-sm text-amber-300">
+                    <p className="text-[9px] uppercase tracking-[0.18em] text-slate-500">
+                      red_flags
+                    </p>
+                    <ul className="mt-1 space-y-0.5 text-[11px] text-amber-300">
                       {verdict.red_flags.map((flag) => (
-                        <li key={flag}>! {flag}</li>
+                        <li key={flag}>
+                          <span className="text-amber-500">!</span> {flag}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -206,7 +251,7 @@ export default function JobDetailPage() {
                   onClick={() => analyze.mutate()}
                   disabled={analyze.isPending}
                 >
-                  Re-run analysis
+                  {analyze.isPending ? "[ analysing ]" : "[ re-run analysis ]"}
                 </Button>
               </div>
             ) : null}

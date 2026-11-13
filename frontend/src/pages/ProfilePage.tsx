@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 
@@ -57,6 +58,23 @@ function splitList(value: string): string[] {
     .split(/[,\n;]+/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function Field({
+  name,
+  children,
+}: {
+  name: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className="grid gap-1">
+      <span className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
+        {name}:
+      </span>
+      {children}
+    </label>
+  );
 }
 
 const SENIORITY: Seniority[] = ["junior", "middle", "senior"];
@@ -119,9 +137,11 @@ export default function ProfilePage() {
     }));
   }
 
-  if (profile.isPending) return <Spinner label="Loading profile" />;
+  if (profile.isPending) return <Spinner label="reading profile" />;
   if (profile.isError) {
-    return <ErrorState message={profile.error.message} onRetry={() => profile.refetch()} />;
+    return (
+      <ErrorState message={profile.error.message} onRetry={() => profile.refetch()} />
+    );
   }
 
   return (
@@ -131,58 +151,69 @@ export default function ProfilePage() {
         subtitle="The same profile the Telegram bot uses. Scores are cached by its hash."
         actions={
           profile.data ? (
-            <Badge tone="sky">hash {profile.data.profile_hash.slice(0, 8)}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge tone="emerald">active</Badge>
+              <Badge tone="sky">hash {profile.data.profile_hash.slice(0, 8)}</Badge>
+            </div>
           ) : (
             <Badge tone="amber">not created yet</Badge>
           )
         }
       />
 
-      <form onSubmit={submit} className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader title="Matching preferences" subtitle="Used by prefilters and the LLM prompt" />
-          <div className="grid gap-4 p-5">
-            <label className="grid gap-1.5 text-sm">
-              <span className="text-slate-300">Headline</span>
+      <form onSubmit={submit} className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <Card className="corner-frame">
+          <CardHeader
+            title="profile.kdl"
+            subtitle="matching preferences"
+            action={<span className="text-[9px] text-slate-600">[ editable ]</span>}
+          />
+          <div className="border-b border-slate-800 bg-black/20 px-4 py-2 text-[10px] text-slate-500">
+            <span className="text-emerald-400">$</span> edit
+            ~/.radar/profile --telegram=100000001
+          </div>
+
+          <div className="grid gap-4 p-4">
+            <p className="code-label">identity</p>
+
+            <Field name="headline">
               <Input
                 value={form.headline ?? ""}
                 placeholder="Python backend developer, 3 years"
-                onChange={(event) => setForm({ ...form, headline: event.target.value || null })}
+                onChange={(event) =>
+                  setForm({ ...form, headline: event.target.value || null })
+                }
               />
-            </label>
+            </Field>
 
-            <label className="grid gap-1.5 text-sm">
-              <span className="text-slate-300">Desired positions</span>
+            <Field name="desired_positions">
               <Input
                 value={positions}
                 placeholder="Python Backend Developer, Backend Engineer"
                 onChange={(event) => setPositions(event.target.value)}
               />
-            </label>
+            </Field>
 
-            <label className="grid gap-1.5 text-sm">
-              <span className="text-slate-300">Skills</span>
+            <Field name="skills">
               <textarea
                 value={skills}
                 onChange={(event) => setSkills(event.target.value)}
                 rows={2}
                 placeholder="Python, FastAPI, PostgreSQL, Docker"
-                className="w-full rounded-lg border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-sky-500 focus:outline-none"
+                className="w-full rounded-none border border-slate-700 bg-black/30 px-2.5 py-2 font-mono text-[11px] text-slate-100 placeholder:text-slate-600 focus:border-sky-500 focus:outline-none"
               />
-            </label>
+            </Field>
 
-            <label className="grid gap-1.5 text-sm">
-              <span className="text-slate-300">Preferred stack</span>
+            <Field name="preferred_stack">
               <Input
                 value={stack}
                 placeholder="FastAPI, PostgreSQL, Redis"
                 onChange={(event) => setStack(event.target.value)}
               />
-            </label>
+            </Field>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-1.5 text-sm">
-                <span className="text-slate-300">Minimum salary</span>
+              <Field name="min_salary_amount">
                 <Input
                   type="number"
                   min={0}
@@ -191,16 +222,19 @@ export default function ProfilePage() {
                   onChange={(event) =>
                     setForm({
                       ...form,
-                      min_salary_amount: event.target.value ? Number(event.target.value) : null,
+                      min_salary_amount: event.target.value
+                        ? Number(event.target.value)
+                        : null,
                     })
                   }
                 />
-              </label>
-              <label className="grid gap-1.5 text-sm">
-                <span className="text-slate-300">Currency</span>
+              </Field>
+              <Field name="salary_currency">
                 <Select
                   value={form.salary_currency}
-                  onChange={(event) => setForm({ ...form, salary_currency: event.target.value })}
+                  onChange={(event) =>
+                    setForm({ ...form, salary_currency: event.target.value })
+                  }
                 >
                   {["EUR", "USD", "GBP", "RUB", "PLN"].map((currency) => (
                     <option key={currency} value={currency}>
@@ -208,38 +242,47 @@ export default function ProfilePage() {
                     </option>
                   ))}
                 </Select>
-              </label>
+              </Field>
             </div>
 
-            <label className="grid gap-1.5 text-sm">
-              <span className="text-slate-300">Preferred locations</span>
+            <Field name="preferred_locations">
               <Input
                 value={locations}
                 placeholder="Germany, Poland, Remote"
                 onChange={(event) => setLocations(event.target.value)}
               />
-            </label>
+            </Field>
+
+            <div className="mt-1 border-t border-slate-800 pt-4">
+              <p className="code-label">filters</p>
+            </div>
 
             <div className="grid gap-2">
-              <span className="text-sm text-slate-300">Target seniority</span>
-              <div className="flex gap-2">
+              <span className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
+                target_seniority:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
                 {SENIORITY.map((level) => (
                   <Button
                     key={level}
                     type="button"
                     size="sm"
-                    variant={form.target_seniority.includes(level) ? "primary" : "outline"}
+                    variant={
+                      form.target_seniority.includes(level) ? "primary" : "outline"
+                    }
                     onClick={() => toggleSeniority(level)}
                   >
-                    {level}
+                    {form.target_seniority.includes(level) ? "[x]" : "[ ]"} {level}
                   </Button>
                 ))}
               </div>
             </div>
 
             <div className="grid gap-2">
-              <span className="text-sm text-slate-300">Work formats</span>
-              <div className="flex gap-2">
+              <span className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
+                work_formats:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
                 {FORMATS.map((format) => (
                   <Button
                     key={format}
@@ -248,7 +291,7 @@ export default function ProfilePage() {
                     variant={form.work_formats.includes(format) ? "primary" : "outline"}
                     onClick={() => toggleFormat(format)}
                   >
-                    {format}
+                    {form.work_formats.includes(format) ? "[x]" : "[ ]"} {format}
                   </Button>
                 ))}
               </div>
@@ -256,26 +299,38 @@ export default function ProfilePage() {
           </div>
         </Card>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <Card>
-            <CardHeader title="Notification rules" subtitle="Applied by the dispatcher" />
-            <div className="grid gap-4 p-5">
-              <label className="grid gap-1.5 text-sm">
-                <span className="text-slate-300">English level</span>
+            <CardHeader
+              title="notify.kdl"
+              subtitle="dispatch rules"
+              action={<Badge tone={form.notifications_enabled ? "emerald" : "rose"}>
+                {form.notifications_enabled ? "on" : "off"}
+              </Badge>}
+            />
+            <div className="grid gap-4 p-4">
+              <Field name="english_level">
                 <Select
                   value={form.english_level}
-                  onChange={(event) => setForm({ ...form, english_level: event.target.value })}
+                  onChange={(event) =>
+                    setForm({ ...form, english_level: event.target.value })
+                  }
                 >
-                  {["unknown", "a1", "a2", "b1", "b2", "c1", "c2", "native"].map((level) => (
-                    <option key={level} value={level}>
-                      {level.toUpperCase()}
-                    </option>
-                  ))}
+                  {["unknown", "a1", "a2", "b1", "b2", "c1", "c2", "native"].map(
+                    (level) => (
+                      <option key={level} value={level}>
+                        {level.toUpperCase()}
+                      </option>
+                    ),
+                  )}
                 </Select>
-              </label>
+              </Field>
 
-              <label className="grid gap-1.5 text-sm">
-                <span className="text-slate-300">Minimum match score: {form.min_match_score}%</span>
+              <div>
+                <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.16em] text-slate-500">
+                  <span>min_match_score:</span>
+                  <span className="text-sky-300">{form.min_match_score}%</span>
+                </div>
                 <input
                   type="range"
                   min={0}
@@ -285,41 +340,54 @@ export default function ProfilePage() {
                   onChange={(event) =>
                     setForm({ ...form, min_match_score: Number(event.target.value) })
                   }
-                  className="accent-sky-500"
+                  className="mt-2 w-full accent-sky-500"
                 />
-              </label>
+              </div>
 
-              <label className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-slate-300">Telegram notifications</span>
+              <label className="flex items-center justify-between gap-3 border-t border-slate-800 pt-3 text-[10px] text-slate-300">
+                <span>telegram_notifications</span>
                 <input
                   type="checkbox"
                   checked={form.notifications_enabled}
                   onChange={(event) =>
-                    setForm({ ...form, notifications_enabled: event.target.checked })
+                    setForm({
+                      ...form,
+                      notifications_enabled: event.target.checked,
+                    })
                   }
                   className="h-4 w-4 accent-sky-500"
                 />
               </label>
 
               <Button type="submit" disabled={save.isPending}>
-                <Save className="h-4 w-4" />
-                {save.isPending ? "Saving…" : "Save profile"}
+                <Save className="h-3.5 w-3.5" />
+                {save.isPending ? "[ writing ]" : "[ write profile ]"}
               </Button>
+
               {save.isSuccess ? (
-                <p className="text-xs text-emerald-300">Profile saved and hash recomputed.</p>
+                <p className="text-[10px] text-emerald-300">
+                  &gt; saved · profile_hash recomputed
+                </p>
               ) : null}
               {save.isError ? (
-                <p className="text-xs text-rose-300">{save.error.message}</p>
+                <p className="text-[10px] text-rose-300">&gt; {save.error.message}</p>
               ) : null}
             </div>
           </Card>
 
-          <Card className="p-5 text-xs leading-5 text-slate-400">
-            <p className="font-medium text-slate-300">How it works</p>
-            <p className="mt-1">
-              Vacancies below the salary floor, outside the seniority list or in a different work
-              format are filtered before the LLM. Everything else is scored against this profile.
+          <Card className="p-4">
+            <p className="code-label">how_it_works</p>
+            <p className="mt-2 text-[10px] leading-5 text-slate-400">
+              Vacancies below the salary floor, outside the seniority list or in a
+              different work format are filtered before the LLM. Everything else
+              is scored against this profile.
             </p>
+            <div className="mt-3 border-t border-slate-800 pt-2 text-[9px] text-slate-600">
+              <p>prefilter → cache → provider → repair</p>
+              <p className="mt-1 text-slate-500">
+                hash ties every analysis to this exact configuration.
+              </p>
+            </div>
           </Card>
         </div>
       </form>
